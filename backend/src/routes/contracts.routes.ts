@@ -1,0 +1,10 @@
+import { Router } from 'express';
+import * as ctrl from '../controllers/contracts.controller';
+const router = Router();
+router.get('/', ctrl.getContracts);
+router.get('/intercontract', ctrl.getIntercontract);
+router.get('/:id', ctrl.getContract);
+router.post('/', ctrl.createContract);
+router.put('/:id', ctrl.updateContract);
+router.delete('/:id', ctrl.deleteContract);
+export default router;

@@ -1,0 +1,10 @@
+import { Router } from 'express';
+import * as ctrl from '../controllers/integrations.controller';
+const router = Router();
+router.get('/', ctrl.getIntegrations);
+router.put('/:type', ctrl.upsertIntegration);
+router.post('/:type/toggle', ctrl.toggleIntegration);
+router.delete('/:type', ctrl.deleteIntegration);
+router.get('/notifications', ctrl.getNotifications);
+router.post('/notifications/read', ctrl.markNotificationsRead);
+export default router;

@@ -1,0 +1,366 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────── ENUMS ───────────────────
+
+enum Role {
+  FREELANCER
+  ADMIN
+}
+
+enum ClientStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum ContractType {
+  REGIE
+  FORFAIT
+  PORTAGE
+}
+
+enum ContractStatus {
+  DRAFT
+  ACTIVE
+  COMPLETED
+  TERMINATED
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+enum ExpenseStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  REJECTED
+}
+
+enum ExpenseCategory {
+  TRANSPORT
+  REPAS
+  HEBERGEMENT
+  MATERIEL
+  LOGICIEL
+  TELEPHONE
+  FORMATION
+  AUTRE
+}
+
+enum PaySlipStatus {
+  DRAFT
+  GENERATED
+  SENT
+}
+
+enum LeaveType {
+  CP
+  RTT
+  MALADIE
+  SANS_SOLDE
+  AUTRE
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum IntegrationType {
+  WHATSAPP
+  SLACK
+  TEAMS
+  TELEGRAM
+}
+
+// ─────────────────── MODELS ───────────────────
+
+model User {
+  id              String    @id @default(cuid())
+  email           String    @unique
+  name            String
+  password        String?
+  role            Role      @default(FREELANCER)
+  ssoProvider     String?
+  ssoProviderId   String?
+  avatar          String?
+  isActive        Boolean   @default(true)
+  lastLoginAt     DateTime?
+  settings        UserSettings?
+  clients         Client[]
+  contracts       Contract[]
+  invoices        Invoice[]
+  expenseReports  ExpenseReport[]
+  paySlips        PaySlip[]
+  leaves          Leave[]
+  integrations    Integration[]
+  notifications   Notification[]
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@map("users")
+}
+
+model UserSettings {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  theme            String   @default("light")
+  primaryColor     String   @default("#6366f1")
+  accentColor      String   @default("#8b5cf6")
+  sidebarColor     String   @default("#1e1b4b")
+  fontFamily       String   @default("Inter")
+  borderRadius     String   @default("md")
+  sidebarCollapsed Boolean  @default(false)
+  language         String   @default("fr")
+  currency         String   @default("EUR")
+  taxRate          Float    @default(20)
+  // Infos société
+  companyName      String?
+  companyAddress   String?
+  companyCity      String?
+  companyPostalCode String?
+  companyCountry   String   @default("France")
+  companySiret     String?
+  companyTva       String?
+  companyPhone     String?
+  companyEmail     String?
+  companyWebsite   String?
+  // Infos bancaires
+  bankIban         String?
+  bankBic          String?
+  bankName         String?
+  // Logo
+  logoUrl          String?
+  // Numérotation factures
+  invoicePrefix    String   @default("FAC")
+  invoiceNextNumber Int     @default(1)
+  // Congés (France)
+  cpPerYear        Float    @default(25)
+  rttPerYear       Float    @default(0)
+
+  @@map("user_settings")
+}
+
+model Client {
+  id           String         @id @default(cuid())
+  userId       String
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name         String
+  email        String?
+  phone        String?
+  address      String?
+  city         String?
+  postalCode   String?
+  country      String         @default("France")
+  siret        String?
+  tva          String?
+  contactName  String?
+  contactEmail String?
+  contactPhone String?
+  notes        String?        @db.Text
+  status       ClientStatus   @default(ACTIVE)
+  contracts    Contract[]
+  invoices     Invoice[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  @@map("clients")
+}
+
+model Contract {
+  id            String         @id @default(cuid())
+  userId        String
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clientId      String
+  client        Client         @relation(fields: [clientId], references: [id])
+  title         String
+  description   String?        @db.Text
+  type          ContractType   @default(REGIE)
+  status        ContractStatus @default(DRAFT)
+  startDate     DateTime
+  endDate       DateTime?
+  dailyRate     Float?
+  monthlyRate   Float?
+  fixedAmount   Float?
+  workingDays   Int?
+  signedAt      DateTime?
+  documentUrl   String?
+  notes         String?        @db.Text
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@map("contracts")
+}
+
+model Invoice {
+  id                String        @id @default(cuid())
+  userId            String
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clientId          String
+  client            Client        @relation(fields: [clientId], references: [id])
+  number            String
+  status            InvoiceStatus @default(DRAFT)
+  issueDate         DateTime
+  dueDate           DateTime
+  taxRate           Float         @default(20)
+  subtotal          Float         @default(0)
+  taxAmount         Float         @default(0)
+  total             Float         @default(0)
+  notes             String?       @db.Text
+  paymentTerms      String?
+  items             InvoiceItem[]
+  payments          Payment[]
+  sentAt            DateTime?
+  paidAt            DateTime?
+  reminderSentAt    DateTime?
+  cancelledAt       DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@unique([userId, number])
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id          String  @id @default(cuid())
+  invoiceId   String
+  invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  description String
+  quantity    Float
+  unitPrice   Float
+  total       Float
+  order       Int     @default(0)
+
+  @@map("invoice_items")
+}
+
+model Payment {
+  id        String   @id @default(cuid())
+  invoiceId String
+  invoice   Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  amount    Float
+  date      DateTime
+  method    String?
+  reference String?
+  notes     String?
+  createdAt DateTime @default(now())
+
+  @@map("payments")
+}
+
+model ExpenseReport {
+  id           String        @id @default(cuid())
+  userId       String
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title        String
+  status       ExpenseStatus @default(DRAFT)
+  month        Int
+  year         Int
+  items        ExpenseItem[]
+  total        Float         @default(0)
+  submittedAt  DateTime?
+  approvedAt   DateTime?
+  notes        String?       @db.Text
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@map("expense_reports")
+}
+
+model ExpenseItem {
+  id              String          @id @default(cuid())
+  expenseReportId String
+  expenseReport   ExpenseReport   @relation(fields: [expenseReportId], references: [id], onDelete: Cascade)
+  date            DateTime
+  category        ExpenseCategory
+  description     String
+  amount          Float
+  vatAmount       Float?
+  receiptUrl      String?
+  isReimbursable  Boolean         @default(true)
+  merchant        String?
+
+  @@map("expense_items")
+}
+
+model PaySlip {
+  id             String        @id @default(cuid())
+  userId         String
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  month          Int
+  year           Int
+  grossAmount    Float
+  netAmount      Float
+  socialCharges  Float
+  urssafAmount   Float         @default(0)
+  csgAmount      Float         @default(0)
+  retirementAmount Float       @default(0)
+  status         PaySlipStatus @default(DRAFT)
+  documentUrl    String?
+  notes          String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@unique([userId, month, year])
+  @@map("pay_slips")
+}
+
+model Leave {
+  id          String      @id @default(cuid())
+  userId      String
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        LeaveType
+  startDate   DateTime
+  endDate     DateTime
+  days        Float
+  status      LeaveStatus @default(PENDING)
+  reason      String?
+  approvedAt  DateTime?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@map("leaves")
+}
+
+model Integration {
+  id          String          @id @default(cuid())
+  userId      String
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        IntegrationType
+  config      Json
+  enabled     Boolean         @default(true)
+  webhookUrl  String?
+  lastUsedAt  DateTime?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@unique([userId, type])
+  @@map("integrations")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  title     String
+  message   String   @db.Text
+  read      Boolean  @default(false)
+  data      Json?
+  createdAt DateTime @default(now())
+
+  @@map("notifications")
+}

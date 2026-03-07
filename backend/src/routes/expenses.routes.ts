@@ -1,0 +1,11 @@
+import { Router } from 'express';
+import * as ctrl from '../controllers/expenses.controller';
+const router = Router();
+router.get('/', ctrl.getExpenseReports);
+router.get('/:id', ctrl.getExpenseReport);
+router.post('/', ctrl.createExpenseReport);
+router.put('/:id', ctrl.updateExpenseReport);
+router.delete('/:id', ctrl.deleteExpenseReport);
+router.post('/:id/submit', ctrl.submitExpenseReport);
+router.get('/:id/download', ctrl.downloadExpenseReport);
+export default router;

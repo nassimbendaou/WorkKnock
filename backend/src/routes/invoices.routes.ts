@@ -1,0 +1,14 @@
+import { Router } from 'express';
+import * as ctrl from '../controllers/invoices.controller';
+const router = Router();
+router.get('/', ctrl.getInvoices);
+router.get('/unpaid', ctrl.getUnpaidInvoices);
+router.get('/:id', ctrl.getInvoice);
+router.post('/', ctrl.createInvoice);
+router.put('/:id', ctrl.updateInvoice);
+router.delete('/:id', ctrl.deleteInvoice);
+router.post('/:id/send', ctrl.sendInvoice);
+router.post('/:id/reminder', ctrl.sendReminder);
+router.post('/:id/pay', ctrl.markAsPaid);
+router.get('/:id/download', ctrl.downloadInvoice);
+export default router;
