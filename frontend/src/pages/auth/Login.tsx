@@ -145,6 +145,20 @@ export function Login() {
               <Input label="Mot de passe" type="password" value={password} onChange={e => setPassword(e.target.value)} leftIcon={<Lock className="w-4 h-4" />} placeholder="••••••••" required minLength={8} hint="Minimum 8 caractères" />
 
               <Button type="submit" className="w-full" loading={loading}>Créer mon compte</Button>
+
+              <div className="relative my-4">
+                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200 dark:border-slate-700" /></div>
+                <div className="relative flex justify-center text-xs text-slate-400"><span className="px-2 bg-white dark:bg-slate-950">ou continuer avec</span></div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <a href={GOOGLE_AUTH_URL} className="btn-secondary justify-center">
+                  <Chrome className="w-4 h-4" /> Google
+                </a>
+                <a href={MICROSOFT_AUTH_URL} className="btn-secondary justify-center">
+                  <Building className="w-4 h-4" /> Microsoft
+                </a>
+              </div>
             </form>
           )}
         </div>
