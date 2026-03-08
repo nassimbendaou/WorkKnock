@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useSearchParams } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { useAuthStore } from './store/auth.store';
@@ -22,22 +22,37 @@ const queryClient = new QueryClient({
   },
 });
 
+// Saves token then hard-reloads to / so Zustand rehydrates cleanly
 function AuthCallback() {
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { refreshUser } = useAuthStore();
 
   useEffect(() => {
     const token = searchParams.get('token');
     if (token) {
       localStorage.setItem('wk_token', token);
-      refreshUser().then(() => navigate('/'));
+      window.location.replace('/');
     } else {
-      navigate('/login');
+      window.location.replace('/login');
     }
   }, []);
 
-  return <div className="flex items-center justify-center h-screen"><div className="animate-spin w-8 h-8 border-4 border-[var(--color-primary-600)] border-t-transparent rounded-full" /></div>;
+  return (
+    <div className="flex items-center justify-center h-screen">
+      <div className="animate-spin w-8 h-8 border-4 border-[var(--color-primary-600)] border-t-transparent rounded-full" />
+    </div>
+  );
+}
+
+// On every app load: if a token exists but we're not authenticated yet, fetch the user
+function TokenInit() {
+  const { isAuthenticated, refreshUser, logout } = useAuthStore();
+  useEffect(() => {
+    const token = localStorage.getItem('wk_token');
+    if (token && !isAuthenticated) {
+      refreshUser().catch(() => logout());
+    }
+  }, []);
+  return null;
 }
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
@@ -57,6 +72,7 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <ThemeInit />
+        <TokenInit />
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
