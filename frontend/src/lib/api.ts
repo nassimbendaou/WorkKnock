@@ -1,7 +1,12 @@
 import axios from 'axios';
 
+// Normalize VITE_API_URL to always point to /api regardless of how it was set:
+// Handles: "https://host/", "https://host", "https://host/api" → always "https://host/api"
+const _raw = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, ''); // strip trailing slashes
+const BASE_URL = _raw ? (_raw.endsWith('/api') ? _raw : `${_raw}/api`) : '/api';
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
+  baseURL: BASE_URL,
   headers: { 'Content-Type': 'application/json' },
 });
 
