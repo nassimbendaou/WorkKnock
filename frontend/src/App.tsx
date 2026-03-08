@@ -67,6 +67,7 @@ export default function App() {
             <Route path="contracts" element={<Contracts />} />
             <Route path="intercontract" element={<Contracts />} />
             <Route path="invoices" element={<Invoices />} />
+            <Route path="invoices/new" element={<Invoices />} />
             <Route path="invoices/unpaid" element={<Invoices />} />
             <Route path="expenses" element={<Expenses />} />
             <Route path="payslips" element={<PaySlips />} />

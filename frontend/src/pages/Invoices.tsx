@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { Plus, Download, Send, CheckCircle, Bell, Trash2, Search, Filter, Eye } from 'lucide-react';
 import api from '@/lib/api';
 import { Button } from '@/components/ui/Button';
@@ -185,10 +185,15 @@ export function Invoices() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState(searchParams.get('search') || '');
   const [status, setStatus] = useState('');
-  const [showCreate, setShowCreate] = useState(false);
+  const [showCreate, setShowCreate] = useState(location.pathname === '/invoices/new');
+
+  useEffect(() => {
+    if (location.pathname === '/invoices/new') setShowCreate(true);
+  }, [location.pathname]);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [showPayment, setShowPayment] = useState(false);
   const [showDelete, setShowDelete] = useState(false);

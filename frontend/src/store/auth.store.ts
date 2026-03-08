@@ -45,8 +45,9 @@ export const useAuthStore = create<AuthState>()(
       },
 
       refreshUser: async () => {
+        const token = localStorage.getItem('wk_token');
         const { data } = await api.get('/auth/me');
-        set({ user: data });
+        set({ user: data, isAuthenticated: true, token });
       },
     }),
     {
