@@ -47,7 +47,10 @@ export function Login() {
     }
   };
 
-  const API_URL = import.meta.env.VITE_API_URL || '/api';
+  // For Google SSO, we need the full backend URL (without /api suffix)
+  const VITE_API_URL = import.meta.env.VITE_API_URL || '';
+  const BACKEND_URL = VITE_API_URL.replace(/\/api$/, '');
+  const GOOGLE_AUTH_URL = BACKEND_URL ? `${BACKEND_URL}/api/auth/google` : '/api/auth/google';
 
   return (
     <div className="min-h-screen flex bg-slate-50 dark:bg-slate-950">
@@ -120,10 +123,10 @@ export function Login() {
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <a href={`${API_URL}/auth/google`} className="btn-secondary justify-center">
+                <a href={GOOGLE_AUTH_URL} className="btn-secondary justify-center">
                   <Chrome className="w-4 h-4" /> Google
                 </a>
-                <a href={`${API_URL}/auth/microsoft`} className="btn-secondary justify-center">
+                <a href={BACKEND_URL ? `${BACKEND_URL}/api/auth/microsoft` : '/api/auth/microsoft'} className="btn-secondary justify-center">
                   <Building className="w-4 h-4" /> Microsoft
                 </a>
               </div>
