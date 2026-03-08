@@ -1,6 +1,5 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { prisma } from '../utils/prisma';
-import { AuthRequest } from '../middleware/auth.middleware';
 import dayjs from 'dayjs';
 
 // French public holidays calculation (simplified)
@@ -58,7 +57,7 @@ const countWorkingDays = (startDate: Date, endDate: Date): number => {
   return count;
 };
 
-export const getLeaves = async (req: AuthRequest, res: Response) => {
+export const getLeaves = async (req: Request, res: Response) => {
   const { status, type, year, page = '1', limit = '50' } = req.query;
   const where: any = { userId: req.user!.id };
   if (status) where.status = status;
@@ -82,7 +81,7 @@ export const getLeaves = async (req: AuthRequest, res: Response) => {
   res.json({ leaves, total });
 };
 
-export const getLeaveBalance = async (req: AuthRequest, res: Response) => {
+export const getLeaveBalance = async (req: Request, res: Response) => {
   const year = req.query.year ? parseInt(req.query.year as string) : new Date().getFullYear();
   const settings = await prisma.userSettings.findUnique({ where: { userId: req.user!.id } });
 
@@ -119,7 +118,7 @@ export const getLeaveBalance = async (req: AuthRequest, res: Response) => {
   });
 };
 
-export const createLeave = async (req: AuthRequest, res: Response) => {
+export const createLeave = async (req: Request, res: Response) => {
   const { type, startDate, endDate, reason } = req.body;
 
   const start = new Date(startDate);
@@ -139,7 +138,7 @@ export const createLeave = async (req: AuthRequest, res: Response) => {
   res.status(201).json(leave);
 };
 
-export const updateLeave = async (req: AuthRequest, res: Response) => {
+export const updateLeave = async (req: Request, res: Response) => {
   const exists = await prisma.leave.findFirst({ where: { id: req.params.id, userId: req.user!.id } });
   if (!exists) return res.status(404).json({ message: 'Congé non trouvé' });
 
@@ -161,7 +160,7 @@ export const updateLeave = async (req: AuthRequest, res: Response) => {
   res.json(leave);
 };
 
-export const deleteLeave = async (req: AuthRequest, res: Response) => {
+export const deleteLeave = async (req: Request, res: Response) => {
   const exists = await prisma.leave.findFirst({ where: { id: req.params.id, userId: req.user!.id } });
   if (!exists) return res.status(404).json({ message: 'Congé non trouvé' });
   await prisma.leave.delete({ where: { id: req.params.id } });

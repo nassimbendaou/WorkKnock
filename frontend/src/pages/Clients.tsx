@@ -168,7 +168,7 @@ export function Clients() {
           options={[{ value: 'ACTIVE', label: 'Actifs' }, { value: 'INACTIVE', label: 'Inactifs' }]} />
       </div>
 
-      <div className="card" padding={false}>
+      <div className="card">
         <Table columns={columns} data={data?.clients || []} keyExtractor={c => c.id}
           onRowClick={c => navigate(`/clients/${c.id}`)} loading={isLoading}
           emptyMessage="Aucun client. Commencez par ajouter vos clients !" />

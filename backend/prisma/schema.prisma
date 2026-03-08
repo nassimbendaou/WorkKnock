@@ -92,6 +92,7 @@ model User {
   email           String    @unique
   name            String
   password        String?
+  phone           String?   @unique
   role            Role      @default(FREELANCER)
   ssoProvider     String?
   ssoProviderId   String?

@@ -7,20 +7,20 @@ import { prisma } from '../utils/prisma';
 
 const router = Router();
 
-// Resolve userId from webhook token in query param
-const resolveUser = async (req: Request): Promise<string | null> => {
-  const token = req.query.token as string;
-  if (!token) return null;
-  const integration = await prisma.integration.findFirst({
-    where: { webhookUrl: { contains: token } },
-    select: { userId: true },
+// ── Global WhatsApp webhook (resolves user by phone number) ──
+router.post('/whatsapp', async (req: Request, res: Response) => {
+  console.log('[WEBHOOK] ✉️  Incoming WhatsApp webhook');
+  console.log('[WEBHOOK] Raw body:', JSON.stringify(req.body, null, 2));
+  res.status(200).json({ status: 'ok' });
+  WhatsAppIntegration.handleGlobalWebhook(req.body).catch(err => {
+    console.error('[WEBHOOK] ❌ handleGlobalWebhook error:', err);
   });
-  return integration?.userId || null;
-};
+});
 
+// Keep legacy per-user webhook for backward compat
 router.post('/whatsapp/:userId', async (req: Request, res: Response) => {
   const { userId } = req.params;
-  res.status(200).json({ status: 'ok' }); // Respond quickly
+  res.status(200).json({ status: 'ok' });
   WhatsAppIntegration.handleWebhook(req.body, userId).catch(console.error);
 });
 
@@ -32,7 +32,6 @@ router.post('/telegram/:userId', async (req: Request, res: Response) => {
 
 router.post('/slack/:userId', async (req: Request, res: Response) => {
   const { userId } = req.params;
-  // Slack requires synchronous response
   const response = await SlackIntegration.handleSlashCommand(req.body, userId);
   res.status(200).json(response);
 });

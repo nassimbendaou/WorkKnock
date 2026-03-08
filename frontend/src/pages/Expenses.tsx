@@ -163,7 +163,7 @@ export function Expenses() {
         <Select className="w-32" placeholder="Toutes les années" value={year} onChange={e => setYear(e.target.value)} options={yearOptions} />
       </div>
 
-      <div className="card" padding={false}>
+      <div className="card">
         <Table columns={columns} data={data?.reports || []} keyExtractor={r => r.id} loading={isLoading} emptyMessage="Aucune note de frais." />
         <Pagination page={page} total={data?.total || 0} limit={20} onPageChange={setPage} />
       </div>

@@ -1,9 +1,8 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { prisma } from '../utils/prisma';
-import { AuthRequest } from '../middleware/auth.middleware';
 import { PdfService } from '../services/pdf.service';
 
-export const getExpenseReports = async (req: AuthRequest, res: Response) => {
+export const getExpenseReports = async (req: Request, res: Response) => {
   const { status, year, page = '1', limit = '20' } = req.query;
   const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
   const where: any = { userId: req.user!.id };
@@ -21,7 +20,7 @@ export const getExpenseReports = async (req: AuthRequest, res: Response) => {
   res.json({ reports, total });
 };
 
-export const getExpenseReport = async (req: AuthRequest, res: Response) => {
+export const getExpenseReport = async (req: Request, res: Response) => {
   const report = await prisma.expenseReport.findFirst({
     where: { id: req.params.id, userId: req.user!.id },
     include: { items: { orderBy: { date: 'asc' } }, user: { include: { settings: true } } },
@@ -30,7 +29,7 @@ export const getExpenseReport = async (req: AuthRequest, res: Response) => {
   res.json(report);
 };
 
-export const createExpenseReport = async (req: AuthRequest, res: Response) => {
+export const createExpenseReport = async (req: Request, res: Response) => {
   const { title, month, year, items, notes } = req.body;
   const total = items?.reduce((sum: number, i: any) => sum + i.amount, 0) || 0;
 
@@ -56,7 +55,7 @@ export const createExpenseReport = async (req: AuthRequest, res: Response) => {
   res.status(201).json(report);
 };
 
-export const updateExpenseReport = async (req: AuthRequest, res: Response) => {
+export const updateExpenseReport = async (req: Request, res: Response) => {
   const exists = await prisma.expenseReport.findFirst({ where: { id: req.params.id, userId: req.user!.id } });
   if (!exists) return res.status(404).json({ message: 'Note de frais non trouvée' });
   if (exists.status === 'APPROVED') return res.status(400).json({ message: 'Une note de frais approuvée ne peut pas être modifiée' });
@@ -89,14 +88,14 @@ export const updateExpenseReport = async (req: AuthRequest, res: Response) => {
   res.json(report);
 };
 
-export const deleteExpenseReport = async (req: AuthRequest, res: Response) => {
+export const deleteExpenseReport = async (req: Request, res: Response) => {
   const exists = await prisma.expenseReport.findFirst({ where: { id: req.params.id, userId: req.user!.id } });
   if (!exists) return res.status(404).json({ message: 'Note de frais non trouvée' });
   await prisma.expenseReport.delete({ where: { id: req.params.id } });
   res.status(204).send();
 };
 
-export const submitExpenseReport = async (req: AuthRequest, res: Response) => {
+export const submitExpenseReport = async (req: Request, res: Response) => {
   const exists = await prisma.expenseReport.findFirst({ where: { id: req.params.id, userId: req.user!.id } });
   if (!exists) return res.status(404).json({ message: 'Note de frais non trouvée' });
 
@@ -108,7 +107,7 @@ export const submitExpenseReport = async (req: AuthRequest, res: Response) => {
   res.json(report);
 };
 
-export const downloadExpenseReport = async (req: AuthRequest, res: Response) => {
+export const downloadExpenseReport = async (req: Request, res: Response) => {
   const report = await prisma.expenseReport.findFirst({
     where: { id: req.params.id, userId: req.user!.id },
     include: { items: true, user: { include: { settings: true } } },

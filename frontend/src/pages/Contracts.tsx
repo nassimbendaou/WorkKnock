@@ -169,7 +169,7 @@ export function Contracts() {
               { value: 'COMPLETED', label: 'Terminé' }, { value: 'TERMINATED', label: 'Résilié' },
             ]} />
           </div>
-          <div className="card" padding={false}>
+          <div className="card">
             <Table columns={columns} data={data?.contracts || []} keyExtractor={c => c.id} loading={isLoading} emptyMessage="Aucun contrat." />
             <Pagination page={page} total={data?.total || 0} limit={20} onPageChange={setPage} />
           </div>

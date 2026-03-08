@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import { prisma } from '../utils/prisma';
 import { signToken } from '../utils/jwt';
-import { AuthRequest } from '../middleware/auth.middleware';
+import { WhatsAppIntegration } from '../integrations/whatsapp.integration';
 
 const userSelect = {
   id: true, email: true, name: true, role: true, avatar: true, isActive: true,
@@ -10,7 +10,7 @@ const userSelect = {
 };
 
 export const register = async (req: Request, res: Response) => {
-  const { email, password, name, companyName } = req.body;
+  const { email, password, name, companyName, phone } = req.body;
 
   const exists = await prisma.user.findUnique({ where: { email } });
   if (exists) return res.status(409).json({ message: 'Email déjà utilisé' });
@@ -31,6 +31,30 @@ export const register = async (req: Request, res: Response) => {
   });
 
   const token = signToken({ userId: user.id, email: user.email, role: user.role });
+
+  // Send WhatsApp welcome message if phone provided
+  if (phone) {
+    const welcomeMsg = `🎉 *Bienvenue sur WorkKnock, ${name} !*
+
+Votre compte a été créé avec succès ! 🚀
+
+Je suis votre assistant IA. Vous pouvez me parler en langage naturel pour :
+
+📄 *Facturation:* "Crée une facture pour [client] de 500€ pour du développement web"
+👤 *Clients:* "Ajoute un client Dupont avec l'email dupont@mail.com"
+💰 *Comptabilité:* "Quel est mon chiffre d'affaires ce mois-ci ?"
+💸 *Impayés:* "Quelles factures sont en retard ?"
+🏖️ *Congés:* "Combien de jours de CP il me reste ?"
+
+Pour commencer, configurez WhatsApp dans les *Intégrations* de votre tableau de bord.
+
+Bonne gestion ! 💼`;
+
+    WhatsAppIntegration.sendMessage(phone, welcomeMsg).catch(err => {
+      console.error('[WhatsApp] Welcome message failed:', err.message);
+    });
+  }
+
   res.status(201).json({ token, user });
 };
 
@@ -50,7 +74,7 @@ export const login = async (req: Request, res: Response) => {
   res.json({ token, user: userWithoutPassword });
 };
 
-export const me = async (req: AuthRequest, res: Response) => {
+export const me = async (req: Request, res: Response) => {
   const user = await prisma.user.findUnique({
     where: { id: req.user!.id },
     select: userSelect,
@@ -58,7 +82,7 @@ export const me = async (req: AuthRequest, res: Response) => {
   res.json(user);
 };
 
-export const updateProfile = async (req: AuthRequest, res: Response) => {
+export const updateProfile = async (req: Request, res: Response) => {
   const { name, avatar } = req.body;
   const user = await prisma.user.update({
     where: { id: req.user!.id },
@@ -68,7 +92,7 @@ export const updateProfile = async (req: AuthRequest, res: Response) => {
   res.json(user);
 };
 
-export const updatePassword = async (req: AuthRequest, res: Response) => {
+export const updatePassword = async (req: Request, res: Response) => {
   const { currentPassword, newPassword } = req.body;
 
   const user = await prisma.user.findUnique({
@@ -86,7 +110,7 @@ export const updatePassword = async (req: AuthRequest, res: Response) => {
   res.json({ message: 'Mot de passe mis à jour' });
 };
 
-export const updateSettings = async (req: AuthRequest, res: Response) => {
+export const updateSettings = async (req: Request, res: Response) => {
   const settings = await prisma.userSettings.upsert({
     where: { userId: req.user!.id },
     create: { userId: req.user!.id, ...req.body },

@@ -35,6 +35,7 @@ export const config = {
     instanceId: process.env.WHATSAPP_INSTANCE_ID || '',
     apiToken: process.env.WHATSAPP_API_TOKEN || '',
     apiUrl: process.env.WHATSAPP_API_URL || 'https://api.green-api.com',
+    botPhone: process.env.WHATSAPP_BOT_PHONE || '',
   },
 
   slack: {
@@ -50,6 +51,11 @@ export const config = {
 
   telegram: {
     botToken: process.env.TELEGRAM_BOT_TOKEN || '',
+  },
+
+  ai: {
+    geminiApiKey: process.env.GEMINI_API_KEY || '',
+    groqApiKey: process.env.GROQ_API_KEY || '',
   },
 
   upload: {

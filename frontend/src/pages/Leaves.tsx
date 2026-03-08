@@ -170,7 +170,7 @@ export function Leaves() {
       </div>
 
       {/* Table */}
-      <div className="card" padding={false}>
+      <div className="card">
         <Table columns={columns} data={leaves} keyExtractor={l => l.id} loading={isLoading} emptyMessage="Aucun congé pour cette période." />
         <Pagination page={page} total={data?.total || 0} limit={50} onPageChange={setPage} />
       </div>

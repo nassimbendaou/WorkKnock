@@ -4,6 +4,7 @@ export interface User {
   name: string;
   role: 'FREELANCER' | 'ADMIN';
   avatar?: string;
+  ssoProvider?: string;
   settings?: UserSettings;
   createdAt: string;
 }

@@ -120,7 +120,7 @@ export function PaySlips() {
         <Select className="w-32" value={year} onChange={e => setYear(e.target.value)} options={yearOptions} />
       </div>
 
-      <div className="card" padding={false}>
+      <div className="card">
         <Table columns={columns} data={data?.paySlips || []} keyExtractor={ps => ps.id} loading={isLoading} emptyMessage="Aucune fiche de paie." />
         <Pagination page={page} total={data?.total || 0} limit={20} onPageChange={setPage} />
       </div>

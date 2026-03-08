@@ -313,7 +313,7 @@ export function Invoices() {
       </div>
 
       {/* Table */}
-      <div className="card" padding={false}>
+      <div className="card">
         <Table
           columns={columns}
           data={data?.invoices || []}

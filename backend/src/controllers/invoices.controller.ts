@@ -1,12 +1,14 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { prisma } from '../utils/prisma';
-import { AuthRequest } from '../middleware/auth.middleware';
 import { generateInvoiceNumber } from '../utils/invoiceNumber';
 import { PdfService } from '../services/pdf.service';
 import { EmailService } from '../services/email.service';
 import { NotificationService } from '../services/notification.service';
+import { WhatsAppIntegration } from '../integrations/whatsapp.integration';
 
-export const getInvoices = async (req: AuthRequest, res: Response) => {
+const fmt = (n: number) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(n);
+
+export const getInvoices = async (req: Request, res: Response) => {
   const { search, status, clientId, page = '1', limit = '20', year, month } = req.query;
   const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
 
@@ -49,7 +51,7 @@ export const getInvoices = async (req: AuthRequest, res: Response) => {
   ]);
 
   // Check & update overdue invoices
-  await prisma.invoice.updateMany({
+  const overdueResult = await prisma.invoice.updateMany({
     where: {
       userId: req.user!.id,
       status: 'SENT',
@@ -58,10 +60,17 @@ export const getInvoices = async (req: AuthRequest, res: Response) => {
     data: { status: 'OVERDUE' },
   });
 
+  // Notify about newly overdue invoices
+  if (overdueResult.count > 0) {
+    NotificationService.create(req.user!.id, 'INVOICE_OVERDUE',
+      `${overdueResult.count} facture(s) en retard`,
+      `${overdueResult.count} facture(s) viennent de passer en retard de paiement`).catch(() => {});
+  }
+
   res.json({ invoices, total, page: parseInt(page as string), totalRevenue: stats._sum.total || 0 });
 };
 
-export const getInvoice = async (req: AuthRequest, res: Response) => {
+export const getInvoice = async (req: Request, res: Response) => {
   const invoice = await prisma.invoice.findFirst({
     where: { id: req.params.id, userId: req.user!.id },
     include: {
@@ -75,7 +84,7 @@ export const getInvoice = async (req: AuthRequest, res: Response) => {
   res.json(invoice);
 };
 
-export const createInvoice = async (req: AuthRequest, res: Response) => {
+export const createInvoice = async (req: Request, res: Response) => {
   const { clientId, items, taxRate, issueDate, dueDate, notes, paymentTerms } = req.body;
   const number = await generateInvoiceNumber(req.user!.id);
 
@@ -111,10 +120,16 @@ export const createInvoice = async (req: AuthRequest, res: Response) => {
       items: true,
     },
   });
+
+  // Auto-notify: invoice created
+  await NotificationService.create(req.user!.id, 'INVOICE_CREATED',
+    `Facture ${number} créée`,
+    `Facture de ${fmt(total)} pour ${invoice.client.name}`);
+
   res.status(201).json(invoice);
 };
 
-export const updateInvoice = async (req: AuthRequest, res: Response) => {
+export const updateInvoice = async (req: Request, res: Response) => {
   const exists = await prisma.invoice.findFirst({ where: { id: req.params.id, userId: req.user!.id } });
   if (!exists) return res.status(404).json({ message: 'Facture non trouvée' });
   if (exists.status === 'PAID') return res.status(400).json({ message: 'Une facture payée ne peut pas être modifiée' });
@@ -157,7 +172,7 @@ export const updateInvoice = async (req: AuthRequest, res: Response) => {
   res.json(invoice);
 };
 
-export const deleteInvoice = async (req: AuthRequest, res: Response) => {
+export const deleteInvoice = async (req: Request, res: Response) => {
   const exists = await prisma.invoice.findFirst({ where: { id: req.params.id, userId: req.user!.id } });
   if (!exists) return res.status(404).json({ message: 'Facture non trouvée' });
   if (exists.status === 'PAID') return res.status(400).json({ message: 'Une facture payée ne peut pas être supprimée' });
@@ -166,7 +181,7 @@ export const deleteInvoice = async (req: AuthRequest, res: Response) => {
   res.status(204).send();
 };
 
-export const sendInvoice = async (req: AuthRequest, res: Response) => {
+export const sendInvoice = async (req: Request, res: Response) => {
   const invoice = await prisma.invoice.findFirst({
     where: { id: req.params.id, userId: req.user!.id },
     include: { client: true, items: true, user: { include: { settings: true } } },
@@ -197,7 +212,7 @@ export const sendInvoice = async (req: AuthRequest, res: Response) => {
   }
 };
 
-export const downloadInvoice = async (req: AuthRequest, res: Response) => {
+export const downloadInvoice = async (req: Request, res: Response) => {
   const invoice = await prisma.invoice.findFirst({
     where: { id: req.params.id, userId: req.user!.id },
     include: { client: true, items: true, user: { include: { settings: true } } },
@@ -210,7 +225,7 @@ export const downloadInvoice = async (req: AuthRequest, res: Response) => {
   res.send(pdfBuffer);
 };
 
-export const markAsPaid = async (req: AuthRequest, res: Response) => {
+export const markAsPaid = async (req: Request, res: Response) => {
   const { amount, date, method, reference } = req.body;
   const exists = await prisma.invoice.findFirst({ where: { id: req.params.id, userId: req.user!.id } });
   if (!exists) return res.status(404).json({ message: 'Facture non trouvée' });
@@ -231,7 +246,7 @@ export const markAsPaid = async (req: AuthRequest, res: Response) => {
   res.json(invoice);
 };
 
-export const sendReminder = async (req: AuthRequest, res: Response) => {
+export const sendReminder = async (req: Request, res: Response) => {
   const invoice = await prisma.invoice.findFirst({
     where: { id: req.params.id, userId: req.user!.id },
     include: { client: true, items: true, user: { include: { settings: true } } },
@@ -254,7 +269,7 @@ export const sendReminder = async (req: AuthRequest, res: Response) => {
   res.json({ message: 'Relance envoyée' });
 };
 
-export const getUnpaidInvoices = async (req: AuthRequest, res: Response) => {
+export const getUnpaidInvoices = async (req: Request, res: Response) => {
   const invoices = await prisma.invoice.findMany({
     where: {
       userId: req.user!.id,

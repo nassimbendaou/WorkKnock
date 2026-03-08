@@ -1,8 +1,7 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { prisma } from '../utils/prisma';
-import { AuthRequest } from '../middleware/auth.middleware';
 
-export const getClients = async (req: AuthRequest, res: Response) => {
+export const getClients = async (req: Request, res: Response) => {
   const { search, status, page = '1', limit = '20' } = req.query;
   const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
 
@@ -30,7 +29,7 @@ export const getClients = async (req: AuthRequest, res: Response) => {
   res.json({ clients, total, page: parseInt(page as string), limit: parseInt(limit as string) });
 };
 
-export const getClient = async (req: AuthRequest, res: Response) => {
+export const getClient = async (req: Request, res: Response) => {
   const client = await prisma.client.findFirst({
     where: { id: req.params.id, userId: req.user!.id },
     include: {
@@ -53,14 +52,14 @@ export const getClient = async (req: AuthRequest, res: Response) => {
   res.json({ ...client, totalRevenue: invoiceStats._sum.total || 0 });
 };
 
-export const createClient = async (req: AuthRequest, res: Response) => {
+export const createClient = async (req: Request, res: Response) => {
   const client = await prisma.client.create({
     data: { ...req.body, userId: req.user!.id },
   });
   res.status(201).json(client);
 };
 
-export const updateClient = async (req: AuthRequest, res: Response) => {
+export const updateClient = async (req: Request, res: Response) => {
   const exists = await prisma.client.findFirst({ where: { id: req.params.id, userId: req.user!.id } });
   if (!exists) return res.status(404).json({ message: 'Client non trouvé' });
 
@@ -71,7 +70,7 @@ export const updateClient = async (req: AuthRequest, res: Response) => {
   res.json(client);
 };
 
-export const deleteClient = async (req: AuthRequest, res: Response) => {
+export const deleteClient = async (req: Request, res: Response) => {
   const exists = await prisma.client.findFirst({ where: { id: req.params.id, userId: req.user!.id } });
   if (!exists) return res.status(404).json({ message: 'Client non trouvé' });
 

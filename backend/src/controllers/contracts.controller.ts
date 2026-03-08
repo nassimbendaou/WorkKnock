@@ -1,8 +1,7 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { prisma } from '../utils/prisma';
-import { AuthRequest } from '../middleware/auth.middleware';
 
-export const getContracts = async (req: AuthRequest, res: Response) => {
+export const getContracts = async (req: Request, res: Response) => {
   const { search, status, clientId, type, page = '1', limit = '20' } = req.query;
   const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
 
@@ -24,7 +23,7 @@ export const getContracts = async (req: AuthRequest, res: Response) => {
   res.json({ contracts, total, page: parseInt(page as string) });
 };
 
-export const getContract = async (req: AuthRequest, res: Response) => {
+export const getContract = async (req: Request, res: Response) => {
   const contract = await prisma.contract.findFirst({
     where: { id: req.params.id, userId: req.user!.id },
     include: { client: true },
@@ -33,7 +32,7 @@ export const getContract = async (req: AuthRequest, res: Response) => {
   res.json(contract);
 };
 
-export const createContract = async (req: AuthRequest, res: Response) => {
+export const createContract = async (req: Request, res: Response) => {
   const contract = await prisma.contract.create({
     data: {
       ...req.body,
@@ -47,7 +46,7 @@ export const createContract = async (req: AuthRequest, res: Response) => {
   res.status(201).json(contract);
 };
 
-export const updateContract = async (req: AuthRequest, res: Response) => {
+export const updateContract = async (req: Request, res: Response) => {
   const exists = await prisma.contract.findFirst({ where: { id: req.params.id, userId: req.user!.id } });
   if (!exists) return res.status(404).json({ message: 'Contrat non trouvé' });
 
@@ -64,7 +63,7 @@ export const updateContract = async (req: AuthRequest, res: Response) => {
   res.json(contract);
 };
 
-export const deleteContract = async (req: AuthRequest, res: Response) => {
+export const deleteContract = async (req: Request, res: Response) => {
   const exists = await prisma.contract.findFirst({ where: { id: req.params.id, userId: req.user!.id } });
   if (!exists) return res.status(404).json({ message: 'Contrat non trouvé' });
 
@@ -72,7 +71,7 @@ export const deleteContract = async (req: AuthRequest, res: Response) => {
   res.status(204).send();
 };
 
-export const getIntercontract = async (req: AuthRequest, res: Response) => {
+export const getIntercontract = async (req: Request, res: Response) => {
   // Find gaps between contracts (inter-contract periods)
   const contracts = await prisma.contract.findMany({
     where: { userId: req.user!.id, status: { in: ['COMPLETED', 'TERMINATED', 'ACTIVE'] } },

@@ -1,6 +1,5 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { prisma } from '../utils/prisma';
-import { AuthRequest } from '../middleware/auth.middleware';
 import { PdfService } from '../services/pdf.service';
 
 // French social charges rates (simplified)
@@ -8,7 +7,7 @@ const URSSAF_RATE = 0.22; // ~22% for micro-entrepreneur
 const CSG_CRDS_RATE = 0.097;
 const RETIREMENT_RATE = 0.068;
 
-export const getPaySlips = async (req: AuthRequest, res: Response) => {
+export const getPaySlips = async (req: Request, res: Response) => {
   const { year, page = '1', limit = '20' } = req.query;
   const where: any = { userId: req.user!.id };
   if (year) where.year = parseInt(year as string);
@@ -24,7 +23,7 @@ export const getPaySlips = async (req: AuthRequest, res: Response) => {
   res.json({ paySlips, total });
 };
 
-export const getPaySlip = async (req: AuthRequest, res: Response) => {
+export const getPaySlip = async (req: Request, res: Response) => {
   const paySlip = await prisma.paySlip.findFirst({
     where: { id: req.params.id, userId: req.user!.id },
     include: { user: { include: { settings: true } } },
@@ -33,7 +32,7 @@ export const getPaySlip = async (req: AuthRequest, res: Response) => {
   res.json(paySlip);
 };
 
-export const generatePaySlip = async (req: AuthRequest, res: Response) => {
+export const generatePaySlip = async (req: Request, res: Response) => {
   const { month, year, grossAmount, notes } = req.body;
 
   // Check if already exists
@@ -67,7 +66,7 @@ export const generatePaySlip = async (req: AuthRequest, res: Response) => {
   res.status(201).json(paySlip);
 };
 
-export const updatePaySlip = async (req: AuthRequest, res: Response) => {
+export const updatePaySlip = async (req: Request, res: Response) => {
   const exists = await prisma.paySlip.findFirst({ where: { id: req.params.id, userId: req.user!.id } });
   if (!exists) return res.status(404).json({ message: 'Fiche de paie non trouvée' });
 
@@ -78,7 +77,7 @@ export const updatePaySlip = async (req: AuthRequest, res: Response) => {
   res.json(paySlip);
 };
 
-export const downloadPaySlip = async (req: AuthRequest, res: Response) => {
+export const downloadPaySlip = async (req: Request, res: Response) => {
   const paySlip = await prisma.paySlip.findFirst({
     where: { id: req.params.id, userId: req.user!.id },
     include: { user: { include: { settings: true } } },

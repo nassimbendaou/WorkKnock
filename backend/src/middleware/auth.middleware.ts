@@ -2,16 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { verifyToken } from '../utils/jwt';
 import { prisma } from '../utils/prisma';
 
-export interface AuthRequest extends Request {
-  user?: {
-    id: string;
-    email: string;
-    role: string;
-    name: string;
-  };
-}
-
-export const authenticate = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const authenticate = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader?.startsWith('Bearer ')) {
@@ -37,7 +28,7 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
   }
 };
 
-export const requireAdmin = (req: AuthRequest, res: Response, next: NextFunction) => {
+export const requireAdmin = (req: Request, res: Response, next: NextFunction) => {
   if (req.user?.role !== 'ADMIN') {
     return res.status(403).json({ message: 'Accès refusé - Administrateur requis' });
   }

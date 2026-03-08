@@ -1,8 +1,7 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { prisma } from '../utils/prisma';
-import { AuthRequest } from '../middleware/auth.middleware';
 
-export const getDashboard = async (req: AuthRequest, res: Response) => {
+export const getDashboard = async (req: Request, res: Response) => {
   const userId = req.user!.id;
   const now = new Date();
   const currentYear = now.getFullYear();
@@ -107,7 +106,7 @@ export const getDashboard = async (req: AuthRequest, res: Response) => {
   });
 };
 
-export const getRevenueStats = async (req: AuthRequest, res: Response) => {
+export const getRevenueStats = async (req: Request, res: Response) => {
   const userId = req.user!.id;
   const { year = new Date().getFullYear() } = req.query;
 
