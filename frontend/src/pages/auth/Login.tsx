@@ -47,10 +47,11 @@ export function Login() {
     }
   };
 
-  // For Google SSO, we need the full backend URL (without /api suffix)
-  const VITE_API_URL = import.meta.env.VITE_API_URL || '';
-  const BACKEND_URL = VITE_API_URL.replace(/\/api$/, '');
-  const GOOGLE_AUTH_URL = BACKEND_URL ? `${BACKEND_URL}/api/auth/google` : '/api/auth/google';
+  // Build absolute SSO URLs — strips trailing slash and /api suffix to get the base Railway URL
+  const rawApiUrl = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, ''); // remove trailing slashes
+  const BACKEND_URL = rawApiUrl.replace(/\/api$/, ''); // remove /api suffix if present
+  const GOOGLE_AUTH_URL = BACKEND_URL ? `${BACKEND_URL}/api/auth/google` : 'http://localhost:3001/api/auth/google';
+  const MICROSOFT_AUTH_URL = BACKEND_URL ? `${BACKEND_URL}/api/auth/microsoft` : 'http://localhost:3001/api/auth/microsoft';
 
   return (
     <div className="min-h-screen flex bg-slate-50 dark:bg-slate-950">
@@ -126,7 +127,7 @@ export function Login() {
                 <a href={GOOGLE_AUTH_URL} className="btn-secondary justify-center">
                   <Chrome className="w-4 h-4" /> Google
                 </a>
-                <a href={BACKEND_URL ? `${BACKEND_URL}/api/auth/microsoft` : '/api/auth/microsoft'} className="btn-secondary justify-center">
+                <a href={MICROSOFT_AUTH_URL} className="btn-secondary justify-center">
                   <Building className="w-4 h-4" /> Microsoft
                 </a>
               </div>
